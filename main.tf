@@ -250,6 +250,16 @@ output "external_elb" {
   value = "${module.security_groups.external_elb}"
 }
 
+// Security group for internal SSH (bastion host).
+output "internal_ssh" {
+  value = "${module.security_groups.internal_ssh}"
+}
+
+// Security group for external SSH.
+output "external_ssh" {
+  value = "${module.security_groups.external_ssh}"
+}
+
 // Comma separated list of internal subnet IDs.
 output "internal_subnets" {
   value = "${module.vpc.internal_subnets}"
