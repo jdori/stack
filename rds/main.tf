@@ -1,29 +1,6 @@
-variable "name" {
-  description = "RDS name and Postgres username"
-}
-
-variable "engine" {
-  description = "Database engine: mysql, postgres, etc."
-  default     = "postgres"
-}
-
-variable "engine_version" {
-  description = "Database version"
-  default     = "9.6.1"
-}
-
-variable "port" {
-  description = "Port for database to listen on"
-  default     = 5432
-}
-
-variable "password" {
-  description = "Postgres user password"
-}
-
-variable "multi_az" {
-  description = "If true, database will be placed in multiple AZs for HA"
-  default     = false
+variable "apply_immediately" {
+  description = "If false, apply changes during maintenance window"
+  default     = true
 }
 
 variable "backup_retention_period" {
@@ -32,23 +9,62 @@ variable "backup_retention_period" {
 }
 
 variable "backup_window" {
-  description = "Time window for backups."
+  description = "Time window for backups"
   default     = "00:00-01:00"
 }
 
-variable "maintenance_window" {
-  description = "Time window for maintenance."
-  default     = "Mon:01:00-Mon:02:00"
+variable "database_name" {
+  description = "Database name"
 }
 
-variable "apply_immediately" {
-  description = "If false, apply changes during maintenance window"
-  default     = true
+variable "engine" {
+  description = "Database engine: mysql, postgres, etc"
+  default     = "postgres"
+}
+
+variable "engine_version" {
+  description = "Database version"
+  default     = "9.6.1"
+}
+
+variable "identifier" {
+  description = "DB instance identifier"
+}
+
+variable "ingress_allow_cidr_blocks" {
+  description = "A list of CIDR blocks to allow traffic from"
+  type        = "list"
+  default     = []
+}
+
+variable "ingress_allow_security_groups" {
+  description = "A list of security group IDs to allow traffic from"
+  type        = "list"
+  default     = []
 }
 
 variable "instance_class" {
   description = "Underlying instance type"
   default     = "db.t2.micro"
+}
+
+variable "password" {
+  description = "Postgres user password"
+}
+
+variable "port" {
+  description = "Port for database to listen on"
+  default     = 5432
+}
+
+variable "multi_az" {
+  description = "If true, database will be placed in multiple AZs for High Availability"
+  default     = false
+}
+
+variable "maintenance_window" {
+  description = "Time window for maintenance"
+  default     = "Mon:01:00-Mon:02:00"
 }
 
 variable "storage_type" {
@@ -66,29 +82,22 @@ variable "publicly_accessible" {
   default     = false
 }
 
-variable "vpc_id" {
-  description = "The VPC ID to use"
-}
-
-variable "ingress_allow_security_groups" {
-  description = "A list of security group IDs to allow traffic from"
-  type        = "list"
-  default     = []
-}
-
-variable "ingress_allow_cidr_blocks" {
-  description = "A list of CIDR blocks to allow traffic from"
-  type        = "list"
-  default     = []
-}
-
 variable "subnet_ids" {
   description = "A list of subnet IDs"
   type        = "list"
 }
 
+variable "username" {
+  description = "Postgres user username"
+}
+
+variable "vpc_id" {
+  description = "The VPC ID to use"
+}
+
+
 resource "aws_security_group" "main" {
-  name        = "${var.name}-rds"
+  name        = "${var.identifier}-rds"
   description = "Allows traffic to RDS from other security groups"
   vpc_id      = "${var.vpc_id}"
 
@@ -114,26 +123,26 @@ resource "aws_security_group" "main" {
   }
 
   tags {
-    Name = "RDS (${var.name})"
+    Name = "RDS (${var.identifier})"
   }
 }
 
 resource "aws_db_subnet_group" "main" {
-  name        = "${var.name}"
+  name        = "${var.identifier}"
   description = "RDS subnet group"
   subnet_ids  = ["${var.subnet_ids}"]
 }
 
 resource "aws_db_instance" "main" {
-  identifier = "${var.name}"
+  identifier = "${var.identifier}"
 
   # Database
   engine         = "${var.engine}"
   engine_version = "${var.engine_version}"
-  username       = "${var.name}"
+  username       = "${var.username}"
   password       = "${var.password}"
   multi_az       = "${var.multi_az}"
-  name           = "${var.name}"
+  name           = "${var.database_name}"
 
   # Backups / maintenance
   backup_retention_period = "${var.backup_retention_period}"
@@ -152,6 +161,6 @@ resource "aws_db_instance" "main" {
   publicly_accessible    = "${var.publicly_accessible}"
 }
 
-output "addr" {
-  value = "postgres://${aws_db_instance.main.username}:${aws_db_instance.main.password}@${aws_db_instance.main.endpoint}"
+output "connection_uri" {
+  value = "${var.engine}://${aws_db_instance.main.username}:${aws_db_instance.main.password}@${aws_db_instance.main.endpoint}"
 }
