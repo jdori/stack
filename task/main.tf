@@ -62,6 +62,11 @@ variable "memory" {
   default     = 512
 }
 
+variable "log_driver" {
+  description = "The log driver to use use for the container"
+  default     = "journald"
+}
+
 /**
  * Resources.
  */
@@ -90,7 +95,7 @@ resource "aws_ecs_task_definition" "main" {
     "entryPoint": ${var.entry_point},
     "mountPoints": [],
     "logConfiguration": {
-      "logDriver": "journald",
+      "logDriver": "${var.log_driver}",
       "options": {
         "tag": "${var.name}"
       }
@@ -112,4 +117,9 @@ output "name" {
 // The created task definition ARN
 output "arn" {
   value = "${aws_ecs_task_definition.main.arn}"
+}
+
+// The revision number of the task definition
+output "revision" {
+  value = "${aws_ecs_task_definition.main.revision}"
 }
