@@ -28,7 +28,7 @@ variable "name" {
 
 variable "use_nat_instances" {
   description = "If true, use EC2 NAT instances instead of the AWS NAT gateway service."
-  default     = false
+  default     = true
 }
 
 variable "nat_instance_type" {
